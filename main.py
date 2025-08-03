@@ -69,16 +69,17 @@ if __name__ == "__main__":
 
       parsed_anime = anitopy.parse(current_filename)
       if (current_filename != last_filename):
+        last_filename = current_filename
         try:
           fetched_anime = graphql_request(query, {"name": parsed_anime['anime_title']}).get("Media")
         except Exception as e:
           if DEBUG_LOGS:
             print(f"Error while fetching anime from anilist api : {e}") 
+          time.sleep(15)
+          continue
         
         if ('episode_number' in parsed_anime) and ('episode_title' in parsed_anime):
           episode_stats = f"Ep {parsed_anime['episode_number']}: {parsed_anime['episode_title']}"
-        elif ('episode_number' in parsed_anime) and (fetched_anime.get("episodes")):
-          episode_stats = f"Episode {parsed_anime['episode_number']}/{fetched_anime.get("episodes")}"
         elif ('episode_number' in parsed_anime):
           episode_stats = f"Episode {parsed_anime['episode_number']}"
         else:
@@ -100,10 +101,13 @@ if __name__ == "__main__":
                   "large_image": fetched_anime.get("coverImage").get("extraLarge"),
                   "large_text": fetched_anime.get("title").get("english")
                 },
+                "buttons": {
+                  "label" : "Test",
+                  "url": "https://www.example.com"
+                }
             }
         )
 
-        last_filename = current_filename
         if DEBUG_LOGS:
           print(f"Presence updated : {parsed_anime['anime_title']}")
       time.sleep(15)
