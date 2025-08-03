@@ -2,6 +2,7 @@ import json
 import time
 import os
 import configparser
+from urllib.parse import unquote
 
 config = configparser.ConfigParser()
 config.read("anime_rpc.conf")
@@ -40,8 +41,12 @@ def get_current_filedata():
       print("Hint: Is MPV running with the '--input-ipc-server' flag?")
     return ["no_file",0]
   elif file_path:
-    duration_seconds = get_mpv_property("duration")
-    
+    # Handle http streams
+    if (file_path.startswith("http")):
+      file_path = unquote(file_path)
+
+    duration_seconds = get_mpv_property("duration") or 0
+
     filename = os.path.basename(file_path)
     duration_milliseconds = duration_seconds * 1000
     return [filename, duration_milliseconds]
