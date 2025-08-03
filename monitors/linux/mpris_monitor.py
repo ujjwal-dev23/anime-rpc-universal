@@ -6,7 +6,7 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read("anime_rpc.conf")
-DEBUG_LOGS = "debug_logs" in config["DEFAULT"]
+DEBUG_LOGS = config["DEFAULT"]["debug_logs"] == "yes"
 
 def get_current_filedata():
   try:

@@ -41,15 +41,18 @@ if __name__ == "__main__":
   config = configparser.ConfigParser()
   
   # Write config file if it doesn't exist
-  with open("anime_rpc.conf", 'x') as conf:
-     config["DEFAULT"] = {
-       "debug_logs": "no"
-     }
-     config.write(conf) 
+  try:
+    with open("anime_rpc.conf", 'x') as conf:
+      config["DEFAULT"] = {
+        "debug_logs": "no"
+      }
+      config.write(conf) 
+  except FileExistsError:
+    print("Config file read")
     
   # Read configuration
   config.read("anime_rpc.conf")
-  DEBUG_LOGS = "debug_logs" in config["DEFAULT"]
+  DEBUG_LOGS = config["DEFAULT"]["debug_logs"] == "yes"
   
   try:
     presence = Presence(client_id)
