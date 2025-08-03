@@ -101,10 +101,6 @@ if __name__ == "__main__":
                   "large_image": fetched_anime.get("coverImage").get("extraLarge"),
                   "large_text": fetched_anime.get("title").get("english")
                 },
-                "buttons": {
-                  "label" : "Test",
-                  "url": "https://www.example.com"
-                }
             }
         )
 
