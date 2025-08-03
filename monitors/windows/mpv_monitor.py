@@ -1,6 +1,11 @@
 import json
 import time
 import os
+import configparser
+
+config = configparser.ConfigParser()
+config.read("anime_rpc.conf")
+DEBUG_LOGS = "debug_logs" in config["DEFAULT"]
 
 def get_mpv_property(property_name):
   pipe_path = r"\\.\pipe\mpvsocket"
@@ -17,7 +22,8 @@ def get_mpv_property(property_name):
         return response_data.get("data")
       else:
         if response_data.get("error") != "property_unavailable":
-          print(f"Error getting property '{property_name}' : '{response_data.get("error")}'")
+          if DEBUG_LOGS:
+            print(f"Error getting property '{property_name}' : '{response_data.get("error")}'")
         return None
       
   except FileNotFoundError:
@@ -29,8 +35,9 @@ def get_mpv_property(property_name):
 def get_current_filedata():
   file_path = get_mpv_property("path")
   if file_path == "pipe_not_found":
-    print("Error: could not connect to mpv.")
-    print("Hint: Is MPV running with the '--input-ipc-server' flag?")
+    if DEBUG_LOGS:
+      print("Error: could not connect to mpv.")
+      print("Hint: Is MPV running with the '--input-ipc-server' flag?")
     return ["no_file",0]
   elif file_path:
     duration_seconds = get_mpv_property("duration")
@@ -39,7 +46,8 @@ def get_current_filedata():
     duration_milliseconds = duration_seconds * 1000
     return [filename, duration_milliseconds]
   else:
-    print("Player is not playing a file")
+    if DEBUG_LOGS:
+      print("Player is not playing a file")
     return ["no_file", 0]
 
 if __name__ == "__main__":

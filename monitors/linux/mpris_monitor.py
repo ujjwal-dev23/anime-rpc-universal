@@ -2,6 +2,11 @@ import dbus
 import os
 import time
 from urllib.parse import urlparse, unquote
+import configparser
+
+config = configparser.ConfigParser()
+config.read("anime_rpc.conf")
+DEBUG_LOGS = "debug_logs" in config["DEFAULT"]
 
 def get_current_filedata():
   try:
@@ -11,7 +16,8 @@ def get_current_filedata():
       service for service in session_bus.list_names() if service.startswith('org.mpris.MediaPlayer2.')
     ]
     if not player_services:
-      print("No active MPRIS player found.")
+      if DEBUG_LOGS:
+        print("No active MPRIS player found.")
       return ["no_player",0]
     
     player_service = player_services[0]
@@ -22,7 +28,8 @@ def get_current_filedata():
     
     file_url = metadata.get('xesam:url')
     if not file_url:
-      print("Player is not playing a file")
+      if DEBUG_LOGS:
+        print("Player is not playing a file")
       return ["no_file",0]
 
     path = unquote(urlparse(file_url).path)
@@ -34,10 +41,12 @@ def get_current_filedata():
     return [filename, int(length_microseconds / 1000)]
 
   except dbus.exceptions.DBusException:
-    print("D-Bus connection error.")
+    if DEBUG_LOGS:
+      print("D-Bus connection error.")
     return ["connection_error",0]
   except IndexError:
-    print("Could not find player service.")
+    if DEBUG_LOGS:
+      print("Could not find player service.")
     return ["no_service",0]
 
 

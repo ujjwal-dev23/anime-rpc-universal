@@ -3,6 +3,19 @@ import time
 import anitopy
 from anilist_api.graphql import graphql_request
 from urllib.parse import unquote
+import platform
+import configparser
+
+if platform.system() == "Linux":
+    from monitors.linux.mpris_monitor import get_current_filedata
+    print("Loaded Linux MPRIS monitor.")
+
+elif platform.system() == "Windows":
+    from monitors.windows.mpv_monitor import get_current_filedata
+    print("Loaded Windows mpv IPC monitor.")
+
+else:
+    raise NotImplementedError(f"Unsupported platform: {platform.system()}")
 
 query = """
 query ($name: String) {
@@ -20,24 +33,24 @@ query ($name: String) {
 }
 """
 
-import platform
-
-if platform.system() == "Linux":
-    from monitors.linux.mpris_monitor import get_current_filedata
-    print("Loaded Linux MPRIS monitor.")
-
-elif platform.system() == "Windows":
-    from monitors.windows.mpv_monitor import get_current_filedata
-    print("Loaded Windows mpv IPC monitor.")
-
-else:
-    raise NotImplementedError(f"Unsupported platform: {platform.system()}")
-
-client_id = "1401172822381826108"  # Replace this with your own client id
+client_id = "1401172822381826108"  # Replace this with your own client id if you want
 
 errors = ['no_player', 'no_file', 'connection_error', 'no_service']
 
 if __name__ == "__main__":
+  config = configparser.ConfigParser()
+  
+  # Write config file if it doesn't exist
+  with open("anime_rpc.conf", 'x') as conf:
+     config["DEFAULT"] = {
+       "debug_logs": "no"
+     }
+     config.write(conf) 
+    
+  # Read configuration
+  config.read("anime_rpc.conf")
+  DEBUG_LOGS = "debug_logs" in config["DEFAULT"]
+  
   try:
     presence = Presence(client_id)
     print("Connected")
@@ -56,7 +69,8 @@ if __name__ == "__main__":
         try:
           fetched_anime = graphql_request(query, {"name": parsed_anime['anime_title']}).get("Media")
         except Exception as e:
-          print(f"Error while fetching anime from anilist api : {e}") 
+          if DEBUG_LOGS:
+            print(f"Error while fetching anime from anilist api : {e}") 
         
         if ('episode_number' in parsed_anime) and ('episode_title' in parsed_anime):
           episode_stats = f"Ep {parsed_anime['episode_number']}: {parsed_anime['episode_title']}"
@@ -87,7 +101,8 @@ if __name__ == "__main__":
         )
 
         last_filename = current_filename
-        print(f"Presence updated : {parsed_anime['anime_title']}")
+        if DEBUG_LOGS:
+          print(f"Presence updated : {parsed_anime['anime_title']}")
       time.sleep(15)
   except KeyboardInterrupt:
     presence.clear()
