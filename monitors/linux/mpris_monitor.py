@@ -12,7 +12,7 @@ def get_current_filedata():
     ]
     if not player_services:
       print("No active MPRIS player found.")
-      return "no_player"
+      return ["no_player",0]
     
     player_service = player_services[0]
     player_object = session_bus.get_object(player_service, '/org/mpris/MediaPlayer2')
@@ -23,7 +23,7 @@ def get_current_filedata():
     file_url = metadata.get('xesam:url')
     if not file_url:
       print("Player is not playing a file")
-      return "no_file"
+      return ["no_file",0]
 
     path = unquote(urlparse(file_url).path)
     filename = os.path.basename(path)
@@ -35,10 +35,10 @@ def get_current_filedata():
 
   except dbus.exceptions.DBusException:
     print("D-Bus connection error.")
-    return "connection_error"
+    return ["connection_error",0]
   except IndexError:
     print("Could not find player service.")
-    return "no_service"
+    return ["no_service",0]
 
 
 if __name__ == "__main__":
@@ -51,6 +51,6 @@ if __name__ == "__main__":
         print(f"Now Playing: {current_filename}")
         last_filename = current_filename
         
-      time.sleep(2)
+      time.sleep(5)
   except KeyboardInterrupt:
     print("Monitor stopped")

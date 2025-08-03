@@ -20,9 +20,22 @@ query ($name: String) {
 }
 """
 
-from mpris_monitor import get_current_filedata
+import platform
+
+if platform.system() == "Linux":
+    from monitors.linux.mpris_monitor import get_current_filedata
+    print("Loaded Linux MPRIS monitor.")
+
+elif platform.system() == "Windows":
+    from monitors.windows.mpv_monitor import get_current_filedata
+    print("Loaded Windows mpv IPC monitor.")
+
+else:
+    raise NotImplementedError(f"Unsupported platform: {platform.system()}")
 
 client_id = "1401172822381826108"  # Replace this with your own client id
+
+errors = ['no_player', 'no_file', 'connection_error', 'no_service']
 
 if __name__ == "__main__":
   try:
@@ -33,7 +46,7 @@ if __name__ == "__main__":
     while True:
       [current_filename, current_filelength] = get_current_filedata()
       current_timestamp = int(time.time() * 1000)
-      if (current_filename in ['no_player', 'no_file', 'connection_error', 'no_service']):
+      if (current_filename in errors):
         presence.clear()
         time.sleep(15)
         continue
