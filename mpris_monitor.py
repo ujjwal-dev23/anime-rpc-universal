@@ -3,7 +3,7 @@ import os
 import time
 from urllib.parse import urlparse, unquote
 
-def get_current_filename():
+def get_current_filedata():
   try:
     session_bus = dbus.SessionBus()
     
@@ -11,7 +11,8 @@ def get_current_filename():
       service for service in session_bus.list_names() if service.startswith('org.mpris.MediaPlayer2.')
     ]
     if not player_services:
-      return "No active MPRIS player found."
+      print("No active MPRIS player found.")
+      return "no_player"
     
     player_service = player_services[0]
     player_object = session_bus.get_object(player_service, '/org/mpris/MediaPlayer2')
@@ -21,16 +22,23 @@ def get_current_filename():
     
     file_url = metadata.get('xesam:url')
     if not file_url:
-      return "Player is not playing a file"
+      print("Player is not playing a file")
+      return "no_file"
 
     path = unquote(urlparse(file_url).path)
     filename = os.path.basename(path)
-    
-    return filename
+
+    length_microseconds = metadata.get("mpris:length") or 0
+
+    # returns the file length in milliseconds
+    return [filename, int(length_microseconds / 1000)]
+
   except dbus.exceptions.DBusException:
-    return "D-Bus connection error."
+    print("D-Bus connection error.")
+    return "connection_error"
   except IndexError:
-    return "Could not find player service."
+    print("Could not find player service.")
+    return "no_service"
 
 
 if __name__ == "__main__":
@@ -38,7 +46,7 @@ if __name__ == "__main__":
   print("Starting MPRIS Monitor (Press Ctrl+C to stop)")
   try:
     while True:
-      current_filename = get_current_filename()
+      current_filename = get_current_filedata()[0]
       if (current_filename != last_filename):
         print(f"Now Playing: {current_filename}")
         last_filename = current_filename
